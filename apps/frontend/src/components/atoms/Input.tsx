@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import { AlertCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -12,10 +13,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ error, inputSize = "md", className, ...props }, ref) => {
     const sizeClass =
       inputSize === "lg"
-        ? "text-h2 p-md"
+        ? "h-11 px-3 py-2 text-body-md"
         : inputSize === "sm"
-          ? "text-body-sm px-sm py-1.5"
-          : "text-body-md p-md";
+          ? "h-9 px-3 text-body-sm"
+          : "h-10 px-3 py-2 text-body-sm";
 
     return (
       <div className="gap-xs flex flex-col">
@@ -33,9 +34,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         />
         {error && (
           <span className="mt-xs gap-xs text-body-sm text-error flex items-center">
-            <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-              error
-            </span>
+            <AlertCircle size={16} aria-hidden="true" />
             {error}
           </span>
         )}

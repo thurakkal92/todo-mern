@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "dotted";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -16,15 +16,17 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     "bg-primary text-on-primary font-bold rounded-lg shadow-sm hover:opacity-90 active:scale-95",
   secondary:
-    "border border-primary text-primary font-bold rounded-lg hover:bg-surface-container-low active:scale-95",
+    "border-2 border-primary text-primary font-bold rounded-lg hover:bg-surface-container-low active:scale-95",
   ghost: "text-on-surface-variant hover:text-primary hover:bg-surface-container-low rounded-lg",
   danger: "bg-error text-on-error font-bold rounded-lg hover:opacity-90 active:scale-95",
+  dotted:
+    "rounded-xl border-2 border-dashed border-dark/10 text-on-surface-variant hover:border-dark/20 hover:bg-dark/5 hover:text-on-surface",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-md py-1.5 text-body-sm",
-  md: "px-lg py-md text-body-sm",
-  lg: "px-2xl py-md text-body-md",
+  sm: "h-9 px-3 text-body-sm",
+  md: "h-10 px-4 py-2 text-body-sm",
+  lg: "h-11 px-8 text-body-sm",
 };
 
 export function Button({

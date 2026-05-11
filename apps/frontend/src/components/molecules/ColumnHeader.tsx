@@ -1,6 +1,7 @@
 "use client";
 
 import type { TaskStatus } from "@todo/shared";
+import { MoreHorizontal } from "lucide-react";
 import { StatusDot } from "@/components/atoms/StatusDot";
 import { TaskCountBadge } from "@/components/atoms/TaskCountBadge";
 import { Icon } from "@/components/atoms/Icon";
@@ -31,7 +32,7 @@ export function ColumnHeader({ status, count, onMenuClick }: ColumnHeaderProps) 
           aria-label="Column options"
           className="p-xs text-on-surface-variant hover:text-primary rounded transition-colors"
         >
-          <Icon name="more_horiz" size={20} />
+          <Icon icon={MoreHorizontal} size={20} />
         </button>
       )}
     </div>

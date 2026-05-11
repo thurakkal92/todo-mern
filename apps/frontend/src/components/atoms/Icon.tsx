@@ -1,20 +1,12 @@
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 interface IconProps {
-  name: string;
-  filled?: boolean;
+  icon: LucideIcon;
   className?: string;
   size?: number;
 }
 
-export function Icon({ name, filled = false, className, size = 24 }: IconProps) {
-  return (
-    <span
-      className={cn(filled ? "material-symbols-filled" : "material-symbols-outlined", className)}
-      style={{ fontSize: size }}
-      aria-hidden="true"
-    >
-      {name}
-    </span>
-  );
+export function Icon({ icon: LucideIconComponent, className, size = 24 }: IconProps) {
+  return <LucideIconComponent size={size} className={cn(className)} aria-hidden="true" />;
 }

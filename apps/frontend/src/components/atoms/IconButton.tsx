@@ -1,23 +1,16 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import { Icon } from "./Icon";
 import { cn } from "@/lib/cn";
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  icon: string;
-  label: string;
-  iconFilled?: boolean;
+  icon: LucideIcon;
+  label?: string;
   size?: number;
 }
 
-export function IconButton({
-  icon,
-  label,
-  iconFilled = false,
-  size = 20,
-  className,
-  ...props
-}: IconButtonProps) {
+export function IconButton({ icon, label, size = 20, className, ...props }: IconButtonProps) {
   return (
     <button
       aria-label={label}
@@ -27,7 +20,7 @@ export function IconButton({
       )}
       {...props}
     >
-      <Icon name={icon} filled={iconFilled} size={size} />
+      <Icon icon={icon} size={size} />
     </button>
   );
 }

@@ -1,9 +1,12 @@
 import { cn } from "@/lib/cn";
 
+export type AvatarColor = "default" | "info" | "success" | "warning";
+
 interface AvatarProps {
   name: string;
   src?: string;
   size?: "sm" | "md";
+  color?: AvatarColor;
   className?: string;
 }
 
@@ -14,14 +17,22 @@ function initials(name: string): string {
   return (first + last).toUpperCase();
 }
 
-export function Avatar({ name, src, size = "sm", className }: AvatarProps) {
-  const sizeClass = size === "sm" ? "w-6 h-6 text-[10px]" : "w-8 h-8 text-xs";
+const colorClasses: Record<AvatarColor, string> = {
+  default: "bg-surface-container-high text-on-surface-variant border-outline-variant",
+  info: "bg-status-info    text-white border-transparent",
+  success: "bg-status-success text-on-surface border-transparent",
+  warning: "bg-status-warning text-on-surface border-transparent",
+};
+
+export function Avatar({ name, src, size = "sm", color = "default", className }: AvatarProps) {
+  const sizeClass = size === "sm" ? "w-8 h-8 text-[12px]" : "w-10 h-10 text-sm";
 
   return (
     <span
       className={cn(
-        "border-outline-variant bg-surface-container-high text-on-surface-variant inline-flex flex-shrink-0 items-center justify-center overflow-hidden rounded-full border font-semibold",
+        "inline-flex flex-shrink-0 items-center justify-center overflow-hidden rounded-[100%] border font-semibold",
         sizeClass,
+        colorClasses[color],
         className,
       )}
       title={name}

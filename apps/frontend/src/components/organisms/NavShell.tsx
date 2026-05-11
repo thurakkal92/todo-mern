@@ -24,17 +24,16 @@ export function NavShell({ children }: NavShellProps) {
         />
       )}
 
-      <SideNav
-        mobileOpen={mobileNavOpen}
-        onClose={() => {
-          setMobileNavOpen(false);
-        }}
-      />
-
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
         <TopBar
           onMenuClick={() => {
             setMobileNavOpen(true);
+          }}
+        />
+        <SideNav
+          mobileOpen={mobileNavOpen}
+          onClose={() => {
+            setMobileNavOpen(false);
           }}
         />
         <main className="flex-1 pt-16">{children}</main>

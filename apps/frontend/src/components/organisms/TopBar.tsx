@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { Menu, Plus, Bell, Settings } from "lucide-react";
 import { Icon } from "@/components/atoms/Icon";
 import { Avatar } from "@/components/atoms/Avatar";
+import { Button } from "../atoms/Button";
 
 interface TopBarProps {
   onMenuClick?: () => void;
@@ -10,7 +12,7 @@ interface TopBarProps {
 
 export function TopBar({ onMenuClick }: TopBarProps) {
   return (
-    <header className="gap-md border-outline-variant bg-surface px-md fixed left-0 right-0 top-0 z-20 flex h-16 items-center border-b lg:left-64">
+    <header className="gap-md bg-surface px-md fixed left-0 right-0 top-0 z-20 flex h-16 items-center">
       {/* Hamburger — mobile only */}
       {onMenuClick && (
         <button
@@ -18,28 +20,17 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           aria-label="Open navigation"
           className="p-sm text-on-surface-variant hover:text-primary mr-xs flex-shrink-0 rounded-lg transition-colors lg:hidden"
         >
-          <Icon name="menu" size={22} />
+          <Icon icon={Menu} size={22} />
         </button>
       )}
 
-      {/* Search */}
-      <div className="gap-sm bg-surface-container-low px-sm flex max-w-xs flex-1 items-center rounded-lg py-1.5">
-        <Icon name="search" size={18} className="text-outline flex-shrink-0" />
-        <input
-          type="search"
-          placeholder="Search tasks…"
-          className="text-body-sm text-on-surface placeholder:text-outline-variant flex-1 bg-transparent outline-none"
-        />
-      </div>
-
       <div className="gap-sm ml-auto flex items-center">
         {/* Create New */}
-        <Link
-          href="/tasks/new"
-          className="gap-xs bg-primary px-md text-body-sm text-on-primary inline-flex items-center rounded-lg py-1.5 font-semibold transition-opacity hover:opacity-90"
-        >
-          <Icon name="add" size={16} className="text-on-primary" />
-          Create New
+        <Link href="/tasks/new">
+          <Button variant="secondary" size="sm">
+            <Icon icon={Plus} size={16} />
+            Create new task
+          </Button>
         </Link>
 
         {/* Notification */}
@@ -47,7 +38,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           aria-label="Notifications"
           className="p-sm text-on-surface-variant hover:text-primary rounded-lg transition-colors"
         >
-          <Icon name="notifications" size={20} />
+          <Icon icon={Bell} size={20} />
         </button>
 
         {/* Settings */}
@@ -55,11 +46,11 @@ export function TopBar({ onMenuClick }: TopBarProps) {
           aria-label="Settings"
           className="p-sm text-on-surface-variant hover:text-primary rounded-lg transition-colors"
         >
-          <Icon name="settings" size={20} />
+          <Icon icon={Settings} size={20} />
         </button>
 
         {/* User avatar */}
-        <Avatar name="Team Member" size="md" />
+        <Avatar name="Team Member" color="success" size="md" />
       </div>
     </header>
   );

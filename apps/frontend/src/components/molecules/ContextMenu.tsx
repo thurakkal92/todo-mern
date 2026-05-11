@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Pencil } from "lucide-react";
 import type { TaskStatus } from "@todo/shared";
 
 const moveOptions: Record<TaskStatus, { label: string; target: TaskStatus }[]> = {
@@ -21,10 +22,11 @@ const moveOptions: Record<TaskStatus, { label: string; target: TaskStatus }[]> =
 interface ContextMenuProps {
   status: TaskStatus;
   onMove: (target: TaskStatus) => void;
+  onEdit: () => void;
   onClose: () => void;
 }
 
-export function ContextMenu({ status, onMove, onClose }: ContextMenuProps) {
+export function ContextMenu({ status, onMove, onEdit, onClose }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +47,21 @@ export function ContextMenu({ status, onMove, onClose }: ContextMenuProps) {
       className="border-outline-variant bg-surface-container-lowest absolute right-0 top-0 z-50 min-w-[180px] rounded-xl border shadow-md"
       role="menu"
     >
-      {moveOptions[status].map(({ label, target }) => (
+      <button
+        role="menuitem"
+        onClick={() => {
+          onEdit();
+          onClose();
+        }}
+        className="px-md py-sm text-body-sm text-on-surface hover:bg-surface-container-low w-full rounded-t-xl text-left transition-colors"
+      >
+        <span className="gap-sm flex items-center">
+          <Pencil size={14} />
+          Edit Task
+        </span>
+      </button>
+      <div className="border-outline-variant/30 border-t" />
+      {moveOptions[status].map(({ label, target }, i) => (
         <button
           key={target}
           role="menuitem"
@@ -53,7 +69,9 @@ export function ContextMenu({ status, onMove, onClose }: ContextMenuProps) {
             onMove(target);
             onClose();
           }}
-          className="px-md py-sm text-body-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors first:rounded-t-xl last:rounded-b-xl"
+          className={`px-md py-sm text-body-sm text-on-surface hover:bg-surface-container-low w-full text-left transition-colors ${
+            i === moveOptions[status].length - 1 ? "rounded-b-xl" : ""
+          }`}
         >
           {label}
         </button>

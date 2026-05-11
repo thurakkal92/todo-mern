@@ -1,14 +1,11 @@
-import { ProjectHeader } from "@/components/organisms/ProjectHeader";
-import { KanbanBoard } from "@/components/organisms/KanbanBoard";
+import { BoardViewHeader } from "@/components/organisms/BoardViewHeader";
+import { BoardContent } from "@/components/organisms/BoardContent";
 
 export default function BoardPage() {
   return (
-    <div className="bg-surface-bright flex h-full flex-col">
-      <ProjectHeader
-        title="My Team"
-        subtitle="Track and manage your team's work across all stages."
-      />
-      <KanbanBoard />
+    <div className="bg-surface-bright container mx-auto flex h-full flex-col">
+      <BoardViewHeader />
+      <BoardContent />
     </div>
   );
 }
