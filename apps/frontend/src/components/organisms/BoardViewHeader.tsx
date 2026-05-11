@@ -51,6 +51,11 @@ export function BoardViewHeader() {
   );
 
   return (
-    <ProjectHeader title={title} teamName={teamName} subtitle={subtitle} rightSlot={rightSlot} />
+    <ProjectHeader
+      title={title}
+      {...(teamName !== undefined && { teamName })}
+      subtitle={subtitle}
+      rightSlot={rightSlot}
+    />
   );
 }

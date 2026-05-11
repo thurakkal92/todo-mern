@@ -25,7 +25,7 @@ export function AvatarStack({ avatars, max = 3, className }: AvatarStackProps) {
         <Avatar
           key={i}
           name={a.name}
-          color={a.color ?? CYCLE_COLORS[i % CYCLE_COLORS.length]}
+          color={a.color ?? CYCLE_COLORS[i % CYCLE_COLORS.length] ?? "default"}
           {...(a.src !== undefined && { src: a.src })}
           className={i > 0 ? "-ml-3" : ""}
         />
