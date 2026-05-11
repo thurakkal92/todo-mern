@@ -4,10 +4,12 @@ import { useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  closestCenter,
+  pointerWithin,
+  rectIntersection,
   useSensor,
   useSensors,
   PointerSensor,
+  type CollisionDetection,
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
@@ -27,6 +29,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/atoms/Tab
 import { cn } from "@/lib/cn";
 
 const STATUSES: TaskStatus[] = ["todo", "in-progress", "done"];
+
+const collisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  return pointerCollisions.length > 0 ? pointerCollisions : rectIntersection(args);
+};
 
 const TAB_LABEL: Record<TaskStatus, string> = {
   todo: "To Do",
@@ -155,7 +162,7 @@ export function KanbanBoard({ projectId: projectIdProp, stacked = false }: Kanba
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={(e) => {
         void handleDragEnd(e);

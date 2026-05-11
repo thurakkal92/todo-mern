@@ -55,7 +55,7 @@ export function KanbanColumn({
         ) : (
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
             {sorted.length === 0 ? (
-              <div className="border-outline-variant py-xl flex flex-col items-center justify-center rounded-lg border-2 border-dashed text-center">
+              <div className="border-outline-variant py-xl pointer-events-none flex flex-col items-center justify-center rounded-lg border-2 border-dashed text-center">
                 <Icon icon={PlusCircle} size={24} className="mb-sm text-outline" />
                 <p className="text-body-sm text-on-surface-variant/60">
                   No tasks yet. Drop one here or add a card.

@@ -23,6 +23,7 @@ import { Input } from "@/components/atoms/Input";
 import { Textarea } from "@/components/atoms/Textarea";
 import { Select } from "@/components/atoms/Select";
 import { Button } from "@/components/atoms/Button";
+import { ToastCard } from "@/components/atoms/ToastCard";
 
 const TaskFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title must be 100 characters or fewer"),
@@ -112,7 +113,13 @@ export function TaskCreationForm({
         if ("error" in moveResult) return;
       }
 
-      toast.success("Task updated!");
+      toast.custom(() => (
+        <ToastCard
+          variant="success"
+          title="Task updated"
+          description={`"${data.title}" was saved.`}
+        />
+      ));
     } else {
       const result = await createTask({
         title: data.title,
@@ -122,7 +129,13 @@ export function TaskCreationForm({
         projectId,
       });
       if ("error" in result) return;
-      toast.success("Task created successfully!");
+      toast.custom(() => (
+        <ToastCard
+          variant="success"
+          title="Task created"
+          description={`"${data.title}" was added.`}
+        />
+      ));
     }
 
     if (onSuccess) onSuccess();
