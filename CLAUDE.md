@@ -23,9 +23,29 @@ A full-stack Kanban board (MERN + TypeScript) built as a technical assessment.
 Three columns: **To Do**, **In Progress**, **Done**.
 Two views: Main Board View and Task Creation View.
 
+Workspace hierarchy: **Teams** contain **Projects**; **Projects** contain **Tasks**.
+The board can be filtered to a single Project, or show all tasks across all Projects
+("All Projects" view).
+
 Graders evaluate: engineering quality, architecture decisions, AI orchestration skill,
 developer-workflow maturity, maintainability, and code standards.
 Documentation is a first-class deliverable.
+
+---
+
+## Workspace Hierarchy
+
+```
+Team ──┬── Project ──┬── Task
+       │             ├── Task
+       │             └── Task
+       └── Project ──── Task
+```
+
+- A **Team** is a top-level workspace container (`name` only — no membership model in this assessment scope).
+- A **Project** belongs to exactly one Team via `teamId`. Projects scope the board.
+- A **Task** optionally belongs to one Project via `projectId`. Tasks without a `projectId` show up in the "All Projects" view alongside assigned tasks; filtering `projectId=none` returns only the unassigned ones.
+- Deletion is **non-cascading** in this scope: the API allows deleting a Project even if Tasks reference it. Out-of-scope follow-ups would either cascade-delete or null-out `projectId`.
 
 ---
 
@@ -34,7 +54,7 @@ Documentation is a first-class deliverable.
 ```
 /apps/frontend        → Next.js 14 App Router frontend
 /apps/backend         → Express backend
-/packages/shared      → Zod schemas + shared TypeScript types (published via workspace)
+/packages/shared      → Zod schemas (task, team, project) + shared TS types
 /docs                 → DESIGN.md, brief.pdf
 CLAUDE.md             ← this file
 README.md
@@ -147,11 +167,26 @@ test(backend): integration tests for PATCH /tasks/:id/move
 ## API Contract
 
 ```
-GET    /api/tasks              → all tasks, sorted by status+order
-POST   /api/tasks              → create task
-PATCH  /api/tasks/:id          → update task fields
-DELETE /api/tasks/:id          → delete task
-PATCH  /api/tasks/:id/move     → change status + recompute order
+# Tasks
+GET    /api/tasks                       → all tasks, sorted by status+order
+GET    /api/tasks?projectId=<id>        → tasks in a project
+GET    /api/tasks?projectId=none        → tasks with no project assigned
+POST   /api/tasks                       → create task (projectId optional)
+PATCH  /api/tasks/:id                   → update task fields (title, description, dueDate)
+DELETE /api/tasks/:id                   → delete task
+PATCH  /api/tasks/:id/move              → change status + recompute order
+
+# Teams
+GET    /api/teams                       → all teams, sorted by createdAt
+POST   /api/teams                       → create team
+PATCH  /api/teams/:id                   → update team name
+DELETE /api/teams/:id                   → delete team
+
+# Projects
+GET    /api/projects                    → all projects
+POST   /api/projects                    → create project (teamId required)
+PATCH  /api/projects/:id                → update project name
+DELETE /api/projects/:id                → delete project
 ```
 
 ### Error shape (always)
@@ -170,15 +205,49 @@ PATCH  /api/tasks/:id/move     → change status + recompute order
 
 ## Task Model Fields
 
-| Field         | Type                                | Notes                     |
-| ------------- | ----------------------------------- | ------------------------- |
-| `_id`         | ObjectId                            | MongoDB default           |
-| `title`       | string                              | required, 1–100 chars     |
-| `description` | string                              | optional, max 500 chars   |
-| `status`      | `"todo" \| "in-progress" \| "done"` | required                  |
-| `order`       | number                              | float/LexoRank per column |
-| `createdAt`   | Date                                | Mongoose timestamps       |
-| `updatedAt`   | Date                                | Mongoose timestamps       |
+| Field         | Type                                | Notes                                                |
+| ------------- | ----------------------------------- | ---------------------------------------------------- |
+| `_id`         | ObjectId                            | MongoDB default                                      |
+| `title`       | string                              | required, 1–100 chars                                |
+| `description` | string                              | optional, max 500 chars                              |
+| `status`      | `"todo" \| "in-progress" \| "done"` | required                                             |
+| `order`       | number                              | float/LexoRank per column                            |
+| `projectId`   | ObjectId                            | optional, ref `Project`. Absent = "unassigned" task. |
+| `dueDate`     | Date                                | optional                                             |
+| `createdAt`   | Date                                | Mongoose timestamps                                  |
+| `updatedAt`   | Date                                | Mongoose timestamps                                  |
+
+**Indexes**:
+
+- `{ projectId, status, order }` — primary board query (per-project boards)
+- `{ status, order }` — "All Projects" board query
+
+---
+
+## Team Model Fields
+
+| Field       | Type     | Notes                |
+| ----------- | -------- | -------------------- |
+| `_id`       | ObjectId | MongoDB default      |
+| `name`      | string   | required, 1–80 chars |
+| `createdAt` | Date     | Mongoose timestamps  |
+| `updatedAt` | Date     | Mongoose timestamps  |
+
+No membership model in scope — Teams are workspace containers only.
+
+---
+
+## Project Model Fields
+
+| Field       | Type     | Notes                          |
+| ----------- | -------- | ------------------------------ |
+| `_id`       | ObjectId | MongoDB default                |
+| `name`      | string   | required, 1–80 chars           |
+| `teamId`    | ObjectId | required, ref `Team`. Indexed. |
+| `createdAt` | Date     | Mongoose timestamps            |
+| `updatedAt` | Date     | Mongoose timestamps            |
+
+**Index**: `{ teamId }` — fast "projects in a team" lookup for the SideNav.
 
 ---
 

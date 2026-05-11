@@ -587,3 +587,75 @@ font-variation-settings:
 ```
 
 Filled variant where specified (check_circle for DONE, assignment active nav).
+
+---
+
+## 11. Workspace Shell & Navigation (post-Stitch additions)
+
+The original three Stitch screens covered the Board view, the Task Creation view, and a Design System reference. Once a workspace hierarchy (Team → Project → Task) was introduced, the shell needed new organisms that weren't in any Stitch screen. This section documents the conventions applied so they stay consistent with the rest of the design system — every token used here is already defined above; no new tokens were introduced.
+
+> Token discipline still applies. Anything visual here must reuse the tokens from §1–§4. No new colors, type levels, spacing values, or radii.
+
+### SideNav additions — TeamSpacesSection
+
+The sidebar from Screen 3 is preserved exactly. A new collapsible **"Team Spaces"** section sits below the static nav links. Each team is a row with:
+
+- A chevron toggle (`expand_more`/`expand_less`) for collapse/expand
+- Team name (uses `body-md` weight 500)
+- A trailing `more_vert` affordance that opens an inline action menu: Rename / Delete
+- Nested projects render below the team header, indented by `lg` (24px), each as a `Link` with the project's `_id` as the route param
+- An inline "+ New project" affordance at the bottom of each team's project list
+- A top-level "+ New team" affordance at the bottom of the section
+
+Active project styling reuses the existing Screen 3 active-nav-item treatment (`bg-on-primary/10` + `text-on-primary`). Hover uses `bg-on-primary/5`. Collapsed teams hide their project list but preserve scroll position.
+
+Create / rename / delete flows do **not** open a separate page. They use inline editing (the row becomes an input on rename) and a confirmation modal (`DeleteConfirmationModal`) for destructive actions.
+
+### TopBar (Client)
+
+Sticky to the top of the main scroll region.
+
+- Mobile (`< sm`): hamburger button on the left to toggle the SideNav drawer
+- Desktop (`≥ sm`): hamburger hidden; SideNav is permanently visible
+- Right side: "Create New" primary button (reuses Screen 3 primary button spec) that opens `TaskCreationModal`
+
+### BoardViewHeader
+
+Replaces the original static project title from Screen 3. Renders above the Kanban board with:
+
+- **Title slot** — active project name, or "All Projects" when none is selected (`heading-md`)
+- **Subtitle slot** — short context line (`body-sm` / `text-on-surface-variant`)
+- **Team breadcrumb** — `<team name>` rendered in `text-primary-fixed` on a dark pill background, shown only when a project is active. Hidden in "All Projects" view.
+- **Right slot** — `AvatarStack` (mocked members, max 3 + overflow counter) + a thin `bg-outline-variant` divider + a "Filters" ghost button. The filter button is a UI affordance only in this scope.
+
+### ProjectHeader (RSC)
+
+Reused by simpler routes that don't need the full BoardViewHeader. Same title + team breadcrumb + subtitle layout, but `rightSlot` is a generic `ReactNode` slot. Static, RSC-rendered.
+
+### TaskCreationModal vs full-page form
+
+The Task Creation View (Screen 2) is preserved as `/tasks/new` for direct linking. The same `TaskCreationForm` is also embedded in a modal wrapper (`TaskCreationModal`) launched from the TopBar's "Create New" button and from each KanbanColumn's "Add Task" affordance. Both surfaces use the **same** form component and the same Zod resolver — only the wrapper differs.
+
+Rationale: a modal keeps the user in board context (no route change, no scroll loss), while the full-page form remains the canonical shareable URL for "create a task". Identical validation behavior in both.
+
+### DeleteConfirmationModal
+
+A single generic confirmation modal handles destructive actions on Task, Project, and Team. It accepts:
+
+- `entityType: "task" | "project" | "team"` — drives the title and copy
+- `entityName: string` — interpolated into the body for clarity
+- `onConfirm: () => void` — wired to the appropriate RTK Query delete mutation
+
+Surface: `bg-surface-container-highest`, `rounded-xl` (per §3 radii), `shadow-lg`. Confirm button uses the `status-error` token; cancel is a `ghost` button.
+
+### AllProjectsBoard
+
+When no project is selected (active project = `null`), the board renders `AllProjectsBoard` instead of the per-project `KanbanBoard`. Visually identical column layout, but cards include a small **project label chip** (uses `body-xs` on `bg-surface-container`) above the task title so the user can tell which project each task belongs to. Unassigned tasks (no `projectId`) render the chip as "Unassigned" in `text-on-surface-variant`.
+
+### Responsive behavior
+
+All additions honor the existing breakpoint rules from §6:
+
+- **360 px**: SideNav becomes a drawer; TopBar shows hamburger; BoardViewHeader stacks (title above right-slot); board switches to single-column tab switcher
+- **768 px**: SideNav permanent at 280 px; TopBar full width; BoardViewHeader inline
+- **1280 px**: same as 768 with `max-w-screen-2xl` on the main scroll region

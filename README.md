@@ -2,6 +2,8 @@
 
 A full-stack Kanban task management app built with the MERN stack and TypeScript. Three columns (To Do, In Progress, Done), drag-and-drop reordering, a task creation form, and a dark-navy sidebar shell — all wired through RTK Query with optimistic updates.
 
+**Workspace hierarchy**: Teams contain Projects; Projects contain Tasks. Switch the board between a single project's view and an "All Projects" view that aggregates tasks across every project plus any unassigned tasks. The SideNav lets you create, rename, and delete Teams and Projects inline.
+
 ---
 
 ## Quick start
@@ -32,7 +34,7 @@ All scripts run from the repo root via npm workspaces.
 | `npm run build`     | Builds both apps for production                                  |
 | `npm run typecheck` | `tsc --noEmit` across shared, backend, and frontend              |
 | `npm run lint`      | ESLint across all workspaces                                     |
-| `npm test`          | Vitest on all workspaces (28 tests: 18 backend, 10 frontend)     |
+| `npm test`          | Vitest on all workspaces (38 tests: 28 backend, 10 frontend)     |
 
 ---
 
@@ -68,6 +70,13 @@ The `PATCH /api/tasks/:id/move` endpoint handles status changes and recomputes o
 
 All server communication goes through **RTK Query** — components never call `fetch` or `axios` directly (enforced by ESLint `no-restricted-imports`). A custom `baseQuery` wraps `fetchBaseQuery` and normalises every error path to a typed `ApiError` shape. A single `useErrorToast` hook subscribes to RTK Query errors and fires sonner toasts.
 
+Two RTK Query slices keep concerns separate:
+
+- **`tasksApi`** — task CRUD and the `/move` endpoint. `getTasks` accepts an optional `projectId` argument so per-project boards and the "All Projects" view share the same cache key strategy.
+- **`workspaceApi`** — teams and projects CRUD. The SideNav, ProjectHeader, and BoardViewHeader subscribe to these queries.
+
+A small **`workspaceSlice`** (Redux state, not RTK Query) tracks the currently active `projectId` so the rest of the app can render the correct board without prop-drilling.
+
 `moveTask` uses **true optimistic updates**: the cache is patched immediately on dispatch, and `patch.undo()` rolls it back if the server returns an error. `createTask` is pessimistic — a spinner shows while the server confirms before the card appears.
 
 Components follow a strict RSC/Client split: anything that uses Redux, React Hook Form, dnd-kit, or DOM events is a Client Component (`"use client"`). Static shells and layout components are RSC.
@@ -80,17 +89,23 @@ Components follow a strict RSC/Client split: anything that uses Redux, React Hoo
 
 ```
 ShellLayout (RSC)
-└── NavShell (Client — owns mobile nav state)
-    ├── SideNav (Client — usePathname for active state)
+└── NavShell (Client — owns mobile drawer state)
+    ├── SideNav (Client — usePathname + workspace state)
+    │   └── TeamSpacesSection (Client — collapsible teams + nested projects,
+    │                          inline create/rename/delete via workspaceApi)
     ├── TopBar (Client — hamburger + Create New)
     └── main
         ├── BoardPage (RSC shell)
-        │   ├── ProjectHeader (RSC)
-        │   └── KanbanBoard (Client — DndContext)
-        │       └── KanbanColumn × 3 (Client — useDroppable)
-        │           └── TaskCard × N (Client — useSortable + ContextMenu)
-        └── CreateTaskPage (RSC shell)
-            └── TaskCreationForm (Client — React Hook Form)
+        │   ├── BoardViewHeader (Client — project title, team breadcrumb,
+        │   │                    member avatars, filter slot)
+        │   └── BoardContent (Client)
+        │       ├── KanbanBoard (Client — DndContext, pointerWithin collision)
+        │       │   └── KanbanColumn × 3 (Client — useDroppable)
+        │       │       └── TaskCard × N (Client — useSortable + ContextMenu)
+        │       └── AllProjectsBoard (Client — used when no project is active)
+        ├── TaskCreationModal (Client — modal wrapper around TaskCreationForm)
+        ├── TaskCreationForm (Client — React Hook Form + Zod resolver)
+        └── DeleteConfirmationModal (Client — used for Task / Project / Team)
 ```
 
 ---
