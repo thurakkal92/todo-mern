@@ -1,0 +1,31 @@
+{
+  "name": "todo-root",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c cyan,magenta \"npm run dev -w apps/backend\" \"npm run dev -w apps/frontend\"",
+    "build": "npm run build -w packages/shared && npm run build -w apps/backend && npm run build -w apps/frontend",
+    "typecheck": "npm run typecheck -w packages/shared && npm run typecheck -w apps/backend && npm run typecheck -w apps/frontend",
+    "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "test": "npm run test -w packages/shared && npm run test -w apps/backend && npm run test -w apps/frontend",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.2"
+  }
+}
