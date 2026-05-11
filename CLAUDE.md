@@ -129,6 +129,10 @@ test(backend): integration tests for PATCH /tasks/:id/move
 
 ---
 
+## Other Rules
+
+- Do not add Co-Authored-By attribution to commits
+
 ## API Contract
 
 ```

@@ -7,9 +7,9 @@ const config: Config = {
     extend: {
       colors: {
         // Status / semantic
-        "status-info": "#2167F5",
-        "status-success": "#58B388",
-        "status-warning": "#F8C540",
+        "status-info": "#1162fb",
+        "status-success": "#23e9a5",
+        "status-warning": "#ffeb33",
         // Brand / interactive
         primary: "#000000",
         "on-primary": "#ffffff",
@@ -52,11 +52,11 @@ const config: Config = {
         tertiary: "#000000",
         "tertiary-container": "#20005e",
         "on-tertiary": "#ffffff",
-        "on-tertiary-container": "#8c74d7",
+        "on-tertiary-container": "#7c38b8",
         "tertiary-fixed": "#e8ddff",
         "tertiary-fixed-dim": "#cebdff",
         "on-tertiary-fixed": "#20005e",
-        "on-tertiary-fixed-variant": "#4d3495",
+        "on-tertiary-fixed-variant": "#7c38b8",
         // Error
         error: "#ba1a1a",
         "on-error": "#ffffff",
@@ -79,6 +79,9 @@ const config: Config = {
         "2xl": "64px",
         "3xl": "80px",
       },
+      fontWeight: {
+        "label-md": "500",
+      },
       fontFamily: {
         sans: ["Manrope", "Inter", "sans-serif"],
         display: ["Manrope", "sans-serif"],
@@ -95,7 +98,9 @@ const config: Config = {
         "body-md": ["16px", { lineHeight: "1.5", fontWeight: "400" }],
         "body-sm": ["14px", { lineHeight: "1.5", fontWeight: "400" }],
         "label-caps": ["12px", { lineHeight: "1", letterSpacing: "0.05em", fontWeight: "600" }],
-        mono: ["13px", { lineHeight: "1.5", fontWeight: "400" }],
+        "label-md": ["12px", { lineHeight: "18px", letterSpacing: "0.01em" }],
+        caption: ["11px", { lineHeight: "14px" }],
+        mono: ["12px", { lineHeight: "1.5", fontWeight: "400" }],
       },
     },
   },
