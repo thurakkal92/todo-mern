@@ -6,6 +6,17 @@ for the technical-assessment Kanban application.
 
 ---
 
+## Quick Reference (read first)
+
+- **Stack**: Next.js 14 (App Router) + Express + MongoDB/Mongoose + Redux Toolkit + RTK Query + Tailwind + dnd-kit + Zod
+- **Dev**: `npm run dev` (both apps). Backend on `:4000`, frontend on `:3000`
+- **Verify before "done"**: `npm run typecheck && npm run lint && npm test && npm run build`
+- **Never**: call `fetch`/`axios` in components, use `any`/`@ts-ignore`, write one giant commit, add Co-Authored-By trailer
+- **Always**: Zod-derived types, layered backend, optimistic updates with rollback, RTK Query for all server I/O
+- **Source of truth**: this file > DESIGN.md > code. If conflict, fix the code or update this file in same PR.
+
+---
+
 ## Project Overview
 
 A full-stack Kanban board (MERN + TypeScript) built as a technical assessment.
@@ -210,7 +221,7 @@ The drop-down on a task card must show **only** columns the task is not currentl
 ```
 # apps/backend/.env.example
 PORT=4000
-MONGODB_URI=mongodb://localhost:27017/kanban
+MONGODB_URI=mongodb://localhost:27017/todo
 NODE_ENV=development
 
 # apps/frontend/.env.example
@@ -253,6 +264,89 @@ npm test             → Vitest on all workspaces
 - [ ] Loading states visible on every async action
 - [ ] Layout works at 360px, 768px, and 1280px
 - [ ] README explains setup, scripts, architecture, key decisions in under 5 minutes
+
+---
+
+## Claude Code Workflow
+
+This section governs _how_ Claude works in this repo. Skills/subagents override default behavior; user instructions always win.
+
+### Skill triggers (auto-invoke)
+
+| Trigger                                        | Skill                                                                      | Why                                                 |
+| ---------------------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------- |
+| User asks "build X", "add feature", "design Y" | `superpowers:brainstorming`                                                | Align intent before code                            |
+| About to write any feature/bugfix code         | `superpowers:test-driven-development`                                      | Red-green-refactor, not after-the-fact tests        |
+| Bug, failing test, unexpected behavior         | `superpowers:systematic-debugging`                                         | Root cause, no shotgun fixes                        |
+| Spec/requirements → multi-step task            | `superpowers:writing-plans`                                                | Plan in `docs/plans/` before touching code          |
+| Plan exists, ready to execute                  | `superpowers:executing-plans` or `superpowers:subagent-driven-development` | Disciplined per-task review                         |
+| About to claim "done" / commit / PR            | `superpowers:verification-before-completion`                               | Run typecheck + lint + test + build, paste output   |
+| UI/frontend work                               | `frontend-design:frontend-design`                                          | Avoid generic AI aesthetics; honor DESIGN.md tokens |
+| Reviewing PR or diff                           | `superpowers:requesting-code-review` / `caveman:caveman-review`            | Terse, actionable feedback                          |
+| Writing commit                                 | `caveman:caveman-commit`                                                   | Conventional Commits, ≤50 char subject              |
+| 2+ independent tasks                           | `superpowers:dispatching-parallel-agents`                                  | Fan out, don't serialize                            |
+
+### Subagent routing
+
+| Task shape                                           | Agent                                      | Notes                          |
+| ---------------------------------------------------- | ------------------------------------------ | ------------------------------ |
+| "Where is X?" / "Find files matching Y" (≤3 queries) | direct `Glob`/`Grep`                       | No agent overhead              |
+| Open-ended codebase exploration (>3 queries)         | `Explore`                                  | Read-only, fast                |
+| Implementation plan / architecture choice            | `Plan`                                     | Returns step-by-step, no edits |
+| Build/debug/review web feature end-to-end            | `fullstack-senior`                         | Production-grade defaults      |
+| Web research, docs lookup                            | `general-purpose` + `WebFetch`/`WebSearch` | Cite URLs                      |
+| Risky/experimental change                            | `isolation: "worktree"`                    | Auto-cleanup on no-op          |
+
+**Rule**: if target known → direct tool. If open-ended → agent. Never both.
+
+### Parallel tool use (default)
+
+Independent calls go in **one** message with multiple tool blocks:
+
+- `git status` + `git diff` + `git log`
+- `Read fileA` + `Read fileB` + `Grep pattern`
+- Multiple Agent dispatches for independent sub-tasks
+
+Serialize only when output of one feeds input of next.
+
+### Verification gate (before "done")
+
+Run and paste output of:
+
+```
+npm run typecheck
+npm run lint
+npm test
+npm run build
+```
+
+For UI changes: also start dev server, exercise feature in browser, check responsive at 360/768/1280px. State explicitly if browser test skipped.
+
+### Task tracking
+
+- Use `TaskCreate` for any change touching ≥3 files or ≥2 logical steps
+- Mark `in_progress` when starting, `completed` immediately on finish (no batching)
+- Skip for single-edit changes
+
+### Memory boundaries (this repo)
+
+| Save                                                         | Skip                                     |
+| ------------------------------------------------------------ | ---------------------------------------- |
+| User preferences contradicting defaults                      | Anything already in this CLAUDE.md       |
+| Surprising decisions + _why_                                 | Code patterns, file paths, architecture  |
+| External system refs (Linear, Atlas cluster, Vercel project) | Git history, "what changed"              |
+| Validated non-obvious approaches                             | Current task state (use TodoWrite/plans) |
+
+### Worktree / isolation
+
+For multi-day features or risky refactors: spawn agent with `isolation: "worktree"`. Default to in-place edits for simple changes.
+
+### Pre-commit checklist
+
+1. Lint-staged runs auto via Husky — don't bypass with `--no-verify`
+2. Commit message: Conventional Commits, ≤50 char subject
+3. No Co-Authored-By trailer (see Other Rules)
+4. One logical change per commit; multi-feature work → multiple commits
 
 ---
 

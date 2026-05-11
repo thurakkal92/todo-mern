@@ -13,7 +13,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "npm run test -w packages/shared && npm run test -w apps/backend && npm run test -w apps/frontend",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.18.0",
