@@ -23,7 +23,7 @@ describe("tasksApi", () => {
     it("creates a task and returns it with status 201", async () => {
       const store = setupTestStore();
       const result = await store.dispatch(
-        tasksApi.endpoints.createTask.initiate({ title: "New task" }),
+        tasksApi.endpoints.createTask.initiate({ title: "New task", status: "todo" }),
       );
       expect("data" in result).toBe(true);
       if ("data" in result && result.data) {
@@ -110,7 +110,9 @@ describe("tasksApi", () => {
       );
 
       const store = setupTestStore();
-      const result = await store.dispatch(tasksApi.endpoints.createTask.initiate({ title: "" }));
+      const result = await store.dispatch(
+        tasksApi.endpoints.createTask.initiate({ title: "", status: "todo" }),
+      );
 
       expect("error" in result).toBe(true);
       if ("error" in result) {

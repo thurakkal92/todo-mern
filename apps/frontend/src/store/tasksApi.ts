@@ -1,55 +1,17 @@
 "use client";
 
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import type { BaseQueryFn, FetchArgs } from "@reduxjs/toolkit/query";
-import type { Task, CreateTaskInput, MoveTaskInput, UpdateTaskInput, ApiError } from "@todo/shared";
-
-const API_URL = process.env["NEXT_PUBLIC_API_URL"] ?? "http://localhost:4000";
-
-const rawBaseQuery = fetchBaseQuery({ baseUrl: `${API_URL}/api` });
-
-function isApiError(data: unknown): data is ApiError {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "error" in data &&
-    typeof (data as ApiError).error === "object" &&
-    typeof (data as ApiError).error.code === "string"
-  );
-}
-
-function networkApiError(status: string | number): ApiError {
-  return {
-    error: {
-      code: "NETWORK_ERROR",
-      message:
-        status === "FETCH_ERROR"
-          ? "Network error — check your connection"
-          : "An unexpected error occurred",
-    },
-  };
-}
-
-const baseQuery: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
-  args,
-  api,
-  extraOptions,
-) => {
-  const result = await rawBaseQuery(args, api, extraOptions);
-  if (result.error) {
-    const { data, status } = result.error;
-    return { error: isApiError(data) ? data : networkApiError(status) };
-  }
-  return result;
-};
+import { createApi } from "@reduxjs/toolkit/query/react";
+import type { Task, CreateTaskInput, MoveTaskInput, UpdateTaskInput } from "@todo/shared";
+import { apiBaseQuery } from "./baseQuery";
 
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
-  baseQuery,
+  baseQuery: apiBaseQuery,
   tagTypes: ["Task"],
   endpoints: (builder) => ({
-    getTasks: builder.query<Task[], undefined>({
-      query: () => "/tasks",
+    // arg is projectId or undefined (home view = all tasks)
+    getTasks: builder.query<Task[], string | undefined>({
+      query: (projectId) => (projectId ? `/tasks?projectId=${projectId}` : "/tasks"),
       providesTags: (result) =>
         result
           ? [
@@ -61,8 +23,6 @@ export const tasksApi = createApi({
 
     createTask: builder.mutation<Task, CreateTaskInput>({
       query: (body) => ({ url: "/tasks", method: "POST", body }),
-      // Pessimistic: wait for server confirmation before showing the new card.
-      // The loading state drives the spinner; no ghost card is shown.
       invalidatesTags: [{ type: "Task", id: "LIST" }],
     }),
 
@@ -71,13 +31,12 @@ export const tasksApi = createApi({
       invalidatesTags: (_result, _error, { id }) => [{ type: "Task", id }],
     }),
 
-    moveTask: builder.mutation<Task, { id: string; body: MoveTaskInput }>({
+    moveTask: builder.mutation<Task, { id: string; body: MoveTaskInput; projectId?: string }>({
       query: ({ id, body }) => ({ url: `/tasks/${id}/move`, method: "PATCH", body }),
-      // True optimistic: update the cache immediately for instant drag-drop feedback.
-      // On failure, undo rolls back to the last good state.
-      async onQueryStarted({ id, body }, { dispatch, queryFulfilled }) {
+      // Optimistic update targets the same cache entry the board is reading from.
+      async onQueryStarted({ id, body, projectId }, { dispatch, queryFulfilled }) {
         const patch = dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+          tasksApi.util.updateQueryData("getTasks", projectId, (draft) => {
             const task = draft.find((t) => t._id === id);
             if (task) {
               task.status = body.status;
