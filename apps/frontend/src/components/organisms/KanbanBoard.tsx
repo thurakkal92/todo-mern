@@ -11,15 +11,28 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from "@dnd-kit/core";
+import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import type { Task, TaskStatus } from "@todo/shared";
 import { useGetTasksQuery, useMoveTaskMutation } from "@/store/tasksApi";
+import { useAppSelector } from "@/store/hooks";
 import { useErrorToast } from "@/hooks/useErrorToast";
 import { isApiError } from "@/lib/apiError";
+import { ToastCard } from "@/components/atoms/ToastCard";
 import { KanbanColumn } from "./KanbanColumn";
+import { TaskCreationModal } from "./TaskCreationModal";
 import { Icon } from "@/components/atoms/Icon";
 import { Button } from "@/components/atoms/Button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/atoms/Tabs";
+import { cn } from "@/lib/cn";
 
 const STATUSES: TaskStatus[] = ["todo", "in-progress", "done"];
+
+const TAB_LABEL: Record<TaskStatus, string> = {
+  todo: "To Do",
+  "in-progress": "In Progress",
+  done: "Done",
+};
 
 function computeOrder(colTasks: Task[], overId: string): number {
   const overIdx = colTasks.findIndex((t) => t._id === overId);
@@ -35,10 +48,24 @@ function computeOrder(colTasks: Task[], overId: string): number {
   return 0;
 }
 
-export function KanbanBoard() {
-  const { data: tasks, isLoading, isError, refetch } = useGetTasksQuery(undefined);
+interface KanbanBoardProps {
+  projectId?: string;
+  stacked?: boolean;
+}
+
+export function KanbanBoard({ projectId: projectIdProp, stacked = false }: KanbanBoardProps) {
+  const reduxProjectId = useAppSelector((state) => state.workspace.activeProjectId);
+  const activeProjectId = projectIdProp !== undefined ? projectIdProp : reduxProjectId;
+  const queryArg = activeProjectId ?? undefined;
+
+  const { data: tasks, isLoading, isError, refetch } = useGetTasksQuery(queryArg);
   const [moveTask, { error: moveError }] = useMoveTaskMutation();
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [mobileTab, setMobileTab] = useState<TaskStatus>("todo");
+  const [modalState, setModalState] = useState<{ isOpen: boolean; defaultStatus: TaskStatus }>({
+    isOpen: false,
+    defaultStatus: "todo",
+  });
 
   useErrorToast(isApiError(moveError) ? moveError : null);
 
@@ -49,7 +76,7 @@ export function KanbanBoard() {
     setActiveTask(task ?? null);
   }
 
-  function handleDragEnd({ active, over }: DragEndEvent) {
+  async function handleDragEnd({ active, over }: DragEndEvent) {
     setActiveTask(null);
     if (!over || !tasks) return;
 
@@ -76,13 +103,33 @@ export function KanbanBoard() {
       newOrder = computeOrder(colTasks, overId);
     }
 
-    void moveTask({ id: draggedId, body: { status: targetStatus, order: newOrder } });
+    const isCrossColumnMove = targetStatus !== draggedTask.status;
+
+    try {
+      await moveTask({
+        id: draggedId,
+        body: { status: targetStatus, order: newOrder },
+        ...(queryArg !== undefined ? { projectId: queryArg } : {}),
+      }).unwrap();
+
+      if (isCrossColumnMove) {
+        toast.custom(() => (
+          <ToastCard
+            variant="success"
+            title="Task moved"
+            description={`"${draggedTask.title}" → ${TAB_LABEL[targetStatus]}`}
+          />
+        ));
+      }
+    } catch {
+      // error state is handled by useErrorToast via moveError
+    }
   }
 
   if (isError) {
     return (
       <div className="gap-md px-2xl py-xl flex flex-1 flex-col items-center justify-center">
-        <Icon name="error_outline" size={40} className="text-error" />
+        <Icon icon={AlertCircle} size={40} className="text-error" />
         <p className="text-body-md text-error">Failed to load tasks.</p>
         <Button
           variant="secondary"
@@ -110,18 +157,73 @@ export function KanbanBoard() {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      onDragEnd={(e) => {
+        void handleDragEnd(e);
+      }}
     >
-      <div className="gap-lg px-2xl pb-2xl pt-lg flex flex-1 overflow-x-auto">
+      {/* Mobile: segmented tab switcher — one column at a time */}
+      <div className={cn("flex flex-col sm:hidden", !stacked && "flex-1")}>
+        <Tabs
+          value={mobileTab}
+          onValueChange={(v) => {
+            setMobileTab(v as TaskStatus);
+          }}
+          className="px-md pt-md pb-sm"
+        >
+          <TabsList>
+            {STATUSES.map((status) => (
+              <TabsTrigger key={status} value={status}>
+                {TAB_LABEL[status]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {STATUSES.map((status) => (
+            <TabsContent key={status} value={status} className="pt-sm">
+              <KanbanColumn
+                status={status}
+                tasks={tasksByStatus[status]}
+                isLoading={isLoading}
+                onAddCard={() => {
+                  setModalState({ isOpen: true, defaultStatus: status });
+                }}
+                hideHeader
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+
+      {/* Desktop: horizontal three-column layout */}
+      <div
+        className={cn(
+          "gap-sm sm:gap-lg px-sm pt-sm pb-md sm:px-md sm:pt-md sm:pb-md hidden overflow-x-auto sm:flex",
+          !stacked && "flex-1",
+        )}
+      >
         {STATUSES.map((status) => (
           <KanbanColumn
             key={status}
             status={status}
             tasks={tasksByStatus[status]}
             isLoading={isLoading}
+            onAddCard={() => {
+              setModalState({ isOpen: true, defaultStatus: status });
+            }}
           />
         ))}
       </div>
+
+      <TaskCreationModal
+        isOpen={modalState.isOpen}
+        onClose={() => {
+          setModalState((prev) => ({ ...prev, isOpen: false }));
+        }}
+        defaultStatus={modalState.defaultStatus}
+        {...(projectIdProp !== undefined && projectIdProp !== "none"
+          ? { defaultProjectId: projectIdProp }
+          : {})}
+      />
 
       <DragOverlay>
         {activeTask && (

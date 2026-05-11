@@ -4,7 +4,11 @@ import { useErrorToast } from "../useErrorToast";
 import type { ApiError } from "@todo/shared";
 
 vi.mock("sonner", () => ({
-  toast: { error: vi.fn() },
+  toast: { custom: vi.fn() },
+}));
+
+vi.mock("@/components/atoms/ToastCard", () => ({
+  ToastCard: () => null,
 }));
 
 describe("useErrorToast", () => {
@@ -17,10 +21,10 @@ describe("useErrorToast", () => {
     renderHook(() => {
       useErrorToast(undefined);
     });
-    expect(toast.error).not.toHaveBeenCalled();
+    expect(toast.custom).not.toHaveBeenCalled();
   });
 
-  it("fires toast.error with the error message", async () => {
+  it("fires toast.custom with the error code as id", async () => {
     const { toast } = await import("sonner");
     const error: ApiError = {
       error: { code: "NOT_FOUND", message: "Task not found" },
@@ -28,7 +32,7 @@ describe("useErrorToast", () => {
     renderHook(() => {
       useErrorToast(error);
     });
-    expect(toast.error).toHaveBeenCalledWith("Task not found", { id: "NOT_FOUND" });
+    expect(toast.custom).toHaveBeenCalledWith(expect.any(Function), { id: "NOT_FOUND" });
   });
 
   it("uses error code as toast id for deduplication", async () => {
@@ -39,7 +43,7 @@ describe("useErrorToast", () => {
     renderHook(() => {
       useErrorToast(error);
     });
-    expect(toast.error).toHaveBeenCalledWith("Validation failed", { id: "VALIDATION_ERROR" });
+    expect(toast.custom).toHaveBeenCalledWith(expect.any(Function), { id: "VALIDATION_ERROR" });
   });
 
   it("does not fire again for the same error reference", async () => {
@@ -49,6 +53,6 @@ describe("useErrorToast", () => {
       useErrorToast(error);
     });
     rerender();
-    expect(toast.error).toHaveBeenCalledTimes(1);
+    expect(toast.custom).toHaveBeenCalledTimes(1);
   });
 });
