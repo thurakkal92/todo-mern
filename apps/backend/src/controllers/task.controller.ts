@@ -3,9 +3,11 @@ import type { CreateTaskInput, UpdateTaskInput, MoveTaskInput } from "@todo/shar
 import { taskService } from "../services/task.service";
 
 export const taskController = {
-  getAll: async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+  getAll: async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const tasks = await taskService.getAll();
+      const projectId =
+        typeof req.query["projectId"] === "string" ? req.query["projectId"] : undefined;
+      const tasks = await taskService.getAll(projectId);
       res.json(tasks);
     } catch (err) {
       next(err);

@@ -8,6 +8,8 @@ export interface ITask extends Document {
   description?: string;
   status: TaskStatus;
   order: number;
+  projectId?: Types.ObjectId;
+  dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -34,6 +36,13 @@ const taskSchema = new Schema<ITask>(
       type: Number,
       required: true,
     },
+    projectId: {
+      type: Schema.Types.ObjectId,
+      ref: "Project",
+    },
+    dueDate: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -42,6 +51,9 @@ const taskSchema = new Schema<ITask>(
       transform(_doc, ret) {
         const r = ret as Record<string, unknown>;
         r["_id"] = (r["_id"] as Types.ObjectId).toString();
+        if (r["projectId"]) {
+          r["projectId"] = (r["projectId"] as Types.ObjectId).toString();
+        }
         delete r["__v"];
         return r;
       },
@@ -49,7 +61,9 @@ const taskSchema = new Schema<ITask>(
   },
 );
 
-// Compound index for the primary board query and ordering
+// Primary board query: tasks within a project per column
+taskSchema.index({ projectId: 1, status: 1, order: 1 });
+// Home view: all tasks across projects
 taskSchema.index({ status: 1, order: 1 });
 
 export const TaskModel = model<ITask>("Task", taskSchema);
